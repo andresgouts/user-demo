@@ -2,6 +2,11 @@ spring:
   application:
     name: demo
   datasource:
+    # NOTA DE SEGURIDAD:
+    # Las credenciales de base de datos se configuran directamente aqui para facilitar la ejecucion
+    # inmediata de la prueba de desarrollo ('plug-and-play' con H2 en memoria).
+    # En entornos reales o productivos, estas credenciales DEBEN ser inyectadas mediante
+    # variables de entorno (p. ej. ${DB_USERNAME}, ${DB_PASSWORD}) o gestores de secretos (AWS Secrets Manager, Vault, etc.).
     url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
@@ -29,6 +34,11 @@ server:
 app:
   security:
     jwt:
+      # NOTA DE SEGURIDAD:
+      # La clave secreta de JWT se deja predefinida en este archivo unicamente para simplificar
+      # la revision y ejecucion rapida del ejercicio tecnico sin requerir configuraciones de entorno previas.
+      # Para ambientes productivos, este valor NUNCA debe estar versionado en el repositorio y se recomienda
+      # suministrarlo mediante variables de entorno (p. ej. ${JWT_SECRET}) o servicios centralizados de gestion de secretos.
       secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
       expiration-ms: 86400000 # 24h
     # Expresion regular configurable para validar la clave

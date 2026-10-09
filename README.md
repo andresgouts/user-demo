@@ -181,9 +181,24 @@ Cualquier cambio a la propiedad `app.security.password-regex` es absorbido autom
 
 ---
 
-## 8. Formato de Endpoints y Ejemplos `curl`
+## 8. Consideraciones de Seguridad y Gestión de Secretos
 
-### 8.1. Registro de Usuario Exitoso
+> [!NOTE]
+> **Facilidad de Ejecución (Plug-and-Play)**:
+> Por fines prácticos de la prueba técnica y para garantizar que la aplicación y sus pruebas automatizadas (Spock y Cucumber) se ejecuten de manera inmediata sin requerir configuración previa en el entorno local del evaluador, se han dejado valores por defecto predefinidos en [`src/main/resources/application.yaml`](file:///D:/Documentos/Repos/demo/src/main/resources/application.yaml) para la clave secreta de JWT (`app.security.jwt.secret`) y las credenciales de la base de datos H2 en memoria (`spring.datasource.username` / `password`).
+
+> [!IMPORTANT]
+> **Buenas Prácticas para Ambientes Productivos**:
+> En arquitecturas empresariales y entornos de producción reales, **nunca se deben versionar credenciales ni secretos en texto plano dentro del repositorio**. Se recomienda implementar alguna de las siguientes alternativas estándar de la industria:
+> 1. **Variables de Entorno (12-Factor App)**: Inyectar los valores dinámicamente mediante variables del sistema operativo o contenedores Docker (p. ej. `${JWT_SECRET}` y `${DB_PASSWORD}`).
+> 2. **Gestores de Secretos Centralizados (Cloud Native)**: Utilizar servicios como **HashiCorp Vault**, **AWS Secrets Manager**, **Azure Key Vault** o **Google Cloud Secret Manager** mediante los conectores de Spring Cloud.
+> 3. **Cifrado en Repositorio**: Emplear herramientas de cifrado como **Jasypt** (`ENC(...)`) donde la clave maestra de desencriptación se provee externamente al inicio de la JVM.
+
+---
+
+## 9. Formato de Endpoints y Ejemplos `curl`
+
+### 9.1. Registro de Usuario Exitoso
 
 **Petición**:
 ```bash
@@ -215,7 +230,7 @@ curl -X POST http://localhost:8080/api/v1/users \
 }
 ```
 
-### 8.2. Error: Correo ya Registrado
+### 9.2. Error: Correo ya Registrado
 
 **Petición con un correo ya existente**:
 ```bash
@@ -235,7 +250,7 @@ curl -X POST http://localhost:8080/api/v1/users \
 }
 ```
 
-### 8.3. Error: Contraseña que no cumple la Regex Configurable
+### 9.3. Error: Contraseña que no cumple la Regex Configurable
 
 **Petición con contraseña débil (ej. "123")**:
 ```bash
@@ -255,7 +270,7 @@ curl -X POST http://localhost:8080/api/v1/users \
 }
 ```
 
-### 8.4. Error: Formato de Correo Inválido
+### 9.4. Error: Formato de Correo Inválido
 
 **Petición con correo mal formado**:
 ```bash
@@ -277,11 +292,11 @@ curl -X POST http://localhost:8080/api/v1/users \
 
 ---
 
-## 9. Pruebas Automatizadas
+## 10. Pruebas Automatizadas
 
 El proyecto cuenta con dos suites de pruebas complementarias:
 
-### 9.1. Pruebas Unitarias con Spock Framework (Groovy)
+### 10.1. Pruebas Unitarias con Spock Framework (Groovy)
 Ubicadas en `src/test/groovy`:
 - [`CreateUserServiceSpec.groovy`](file:///D:/Documentos/Repos/demo/src/test/groovy/com/user/demo/application/service/CreateUserServiceSpec.groovy):
   - Verifica creación exitosa de usuario y hashing de contraseña.
@@ -292,7 +307,7 @@ Ubicadas en `src/test/groovy`:
 - [`JwtTokenServiceSpec.groovy`](file:///D:/Documentos/Repos/demo/src/test/groovy/com/user/demo/infrastructure/security/JwtTokenServiceSpec.groovy):
   - Verifica estructura y emisión de token JWT firmado.
 
-### 9.2. Pruebas de Integración BDD con Cucumber
+### 10.2. Pruebas de Integración BDD con Cucumber
 Ubicadas en `src/test/resources/features` y `src/test/java/com/user/demo/cucumber`:
 - [`user_registration.feature`](file:///D:/Documentos/Repos/demo/src/test/resources/features/user_registration.feature):
   - **Escenario 1**: Registro exitoso con validación de status 201, UUID, JWT, campos de auditoría e `isactive`.
