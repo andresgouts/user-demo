@@ -24,6 +24,7 @@ graph TD
 
     subgraph Application ["Capa de Aplicación (application)"]
         SVC["CreateUserService"]
+        UCM["UserCommandMapper"]
         TS["TokenService (Contrato)"]
         CMD["DTOs / Commands (CreateUserCommand, UserResult)"]
     end
@@ -37,6 +38,7 @@ graph TD
 
     UC --> UDM
     UC --> SVC
+    SVC --> UCM
     SVC --> UREPO
     SVC --> TS
     SVC --> USER
@@ -55,15 +57,16 @@ sequenceDiagram
     autonumber
     actor Cliente as Cliente HTTP
     participant Controller as UserController
-    participant Mapper as UserDtoMapper
+    participant DtoMapper as UserDtoMapper
     participant Service as CreateUserService
+    participant CmdMapper as UserCommandMapper
     participant Repo as UserRepository
     participant JWT as JwtTokenService
     participant DB as H2 Database
 
     Cliente->>Controller: POST /api/v1/users (JSON)
-    Controller->>Mapper: toCommand(UserRequestDto)
-    Mapper-->>Controller: CreateUserCommand
+    Controller->>DtoMapper: toCommand(UserRequestDto)
+    DtoMapper-->>Controller: CreateUserCommand
     Controller->>Service: execute(CreateUserCommand)
     
     Service->>Service: Validar Regex Correo
@@ -81,13 +84,17 @@ sequenceDiagram
         Service->>Service: Hash de contraseña (BCrypt)
         Service->>JWT: generateToken(email)
         JWT-->>Service: Token JWT firmado (HMAC-SHA256)
-        Service->>Repo: save(User con teléfonos y token)
+        Service->>CmdMapper: toDomain(command, hash, token)
+        CmdMapper-->>Service: User (dominio con teléfonos)
+        Service->>Repo: save(User)
         Repo->>DB: INSERT INTO users y phones
         DB-->>Repo: Confirmación
         Repo-->>Service: User persistido
+        Service->>CmdMapper: toResult(savedUser, phones)
+        CmdMapper-->>Service: UserResult
         Service-->>Controller: UserResult
-        Controller->>Mapper: toResponse(UserResult)
-        Mapper-->>Controller: UserResponseDto
+        Controller->>DtoMapper: toResponse(UserResult)
+        DtoMapper-->>Controller: UserResponseDto
         Controller-->>Cliente: HTTP 201 Created (JSON con id, fechas, token, isactive)
     end
 ```
@@ -99,7 +106,7 @@ sequenceDiagram
 Se adoptó una **Arquitectura Limpia directa y pragmática** que elimina la sobrecarga de paquetes redundantes (`adapter.input`, `adapter.output`, `port.in`, `port.out`):
 
 - **`domain`**: El núcleo de la lógica de negocio. Contiene los modelos puros (`User`, `Phone`), el contrato de repositorio (`UserRepository`) y las excepciones de dominio (`EmailAlreadyRegisteredException`, `InvalidUserDataException`). Es 100% independiente de frameworks de presentación y persistencia.
-- **`application`**: Orquesta los casos de uso. Contiene `CreateUserService`, contratos de servicios auxiliares como `TokenService` y los DTOs internos (`CreateUserCommand`, `UserResult`).
+- **`application`**: Orquesta los casos de uso. Contiene `CreateUserService`, mappers de aplicación ([`UserCommandMapper`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/application/mapper/UserCommandMapper.java)), contratos de servicios auxiliares como `TokenService` y los DTOs internos (`CreateUserCommand`, `UserResult`).
 - **`infrastructure`**: Concreta las interacciones con el exterior:
   - `controller`: Controlador REST ([`UserController`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/infrastructure/controller/UserController.java)), DTOs de petición/respuesta, mappers desacoplados ([`UserDtoMapper`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/infrastructure/controller/mapper/UserDtoMapper.java)) y el manejador global de excepciones ([`GlobalExceptionHandler`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/infrastructure/controller/GlobalExceptionHandler.java)).
   - `persistence`: Entidades JPA (`UserEntity`, `PhoneEntity`), interfaz Spring Data JPA (`UserJpaRepository`), mappers entidad-dominio ([`UserEntityMapper`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/infrastructure/persistence/mapper/UserEntityMapper.java)) y la implementación [`UserRepositoryImpl`](file:///D:/Documentos/Repos/demo/src/main/java/com/user/demo/infrastructure/persistence/UserRepositoryImpl.java) que satisface el contrato del dominio.
@@ -302,6 +309,8 @@ Ubicadas en `src/test/groovy`:
   - Verifica creación exitosa de usuario y hashing de contraseña.
   - Verifica lanzamiento de `EmailAlreadyRegisteredException` con mensaje `"El correo ya registrado"`.
   - Pruebas parametrizadas (`where:`) para validación de patrones regex de correo y contraseñas.
+- [`UserCommandMapperSpec.groovy`](file:///D:/Documentos/Repos/demo/src/test/groovy/com/user/demo/application/mapper/UserCommandMapperSpec.groovy):
+  - Verifica el mapeo de `CreateUserCommand` a `User` (dominio) y de `User` a `UserResult`.
 - [`UserDtoMapperSpec.groovy`](file:///D:/Documentos/Repos/demo/src/test/groovy/com/user/demo/infrastructure/controller/mapper/UserDtoMapperSpec.groovy):
   - Verifica el mapeo bidireccional entre DTOs HTTP y comandos/resultados de aplicación.
 - [`JwtTokenServiceSpec.groovy`](file:///D:/Documentos/Repos/demo/src/test/groovy/com/user/demo/infrastructure/security/JwtTokenServiceSpec.groovy):

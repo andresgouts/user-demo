@@ -2,6 +2,7 @@ package com.user.demo.application.service
 
 import com.user.demo.application.dto.CreateUserCommand
 import com.user.demo.application.dto.PhoneCommand
+import com.user.demo.application.mapper.UserCommandMapper
 import com.user.demo.domain.exception.EmailAlreadyRegisteredException
 import com.user.demo.domain.exception.InvalidUserDataException
 import com.user.demo.domain.model.User
@@ -15,6 +16,7 @@ class CreateUserServiceSpec extends Specification {
     UserRepository userRepository = Mock()
     TokenService tokenService = Mock()
     PasswordEncoder passwordEncoder = Mock()
+    UserCommandMapper userCommandMapper = new UserCommandMapper()
 
     String passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{6,}\$"
     String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$"
@@ -24,6 +26,7 @@ class CreateUserServiceSpec extends Specification {
             userRepository,
             tokenService,
             passwordEncoder,
+            userCommandMapper,
             passwordRegex,
             emailRegex
     )
