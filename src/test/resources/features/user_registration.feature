@@ -17,7 +17,7 @@ Característica: Registro de usuarios en la API RESTful
     Dado que ya existe un usuario registrado con correo "duplicado@empresa.com"
     Cuando intento registrar otro usuario con el mismo correo "duplicado@empresa.com" y clave "Clave123"
     Entonces el código de respuesta debe ser 409
-    Y el mensaje de error debe ser "El correo ya registrado"
+    Y el mensaje de error debe ser "El correo ya se ha registrado previamente"
 
   Escenario: Error al registrar un usuario con formato de correo inválido
     Dado que tengo un usuario con correo inválido "correo-invalido" y clave "Clave123"

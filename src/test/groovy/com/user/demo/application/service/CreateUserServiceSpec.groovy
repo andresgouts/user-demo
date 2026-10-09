@@ -81,7 +81,7 @@ class CreateUserServiceSpec extends Specification {
 
         then: "se lanza EmailAlreadyRegisteredException con el mensaje requerido"
         def ex = thrown(EmailAlreadyRegisteredException)
-        ex.message == "El correo ya registrado"
+        ex.message == "El correo ya se ha registrado previamente"
         0 * userRepository.save(_)
     }
 
