@@ -61,10 +61,8 @@ class UserCommandMapperSpec extends Specification {
                 ])
                 .build()
 
-        def phones = [new PhoneCommand("9876543", "2", "56")]
-
         when: "se mapea a UserResult"
-        def result = mapper.toResult(user, phones)
+        def result = mapper.toResult(user)
 
         then: "el UserResult contiene los datos esperados"
         result != null
@@ -77,13 +75,17 @@ class UserCommandMapperSpec extends Specification {
         result.modified == now
         result.lastLogin == now
         result.phones.size() == 1
+        result.phones[0].id == "phone-uuid"
         result.phones[0].number == "9876543"
+        result.phones[0].cityCode == "2"
+        result.phones[0].countryCode == "56"
     }
 
     def "debe retornar null cuando los argumentos de entrada son nulos"() {
         expect:
         mapper.toDomain(null, "pass", "token") == null
-        mapper.toResult(null, []) == null
+        mapper.toResult(null) == null
         mapper.toPhoneDomain(null) == null
+        mapper.toPhoneResult(null) == null
     }
 }

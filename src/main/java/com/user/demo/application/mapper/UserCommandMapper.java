@@ -2,6 +2,7 @@ package com.user.demo.application.mapper;
 
 import com.user.demo.application.dto.CreateUserCommand;
 import com.user.demo.application.dto.PhoneCommand;
+import com.user.demo.application.dto.PhoneResult;
 import com.user.demo.application.dto.UserResult;
 import com.user.demo.domain.model.Phone;
 import com.user.demo.domain.model.User;
@@ -54,20 +55,39 @@ public class UserCommandMapper {
                 .build();
     }
 
-    public UserResult toResult(User user, List<PhoneCommand> phones) {
+    public UserResult toResult(User user) {
         if (user == null) {
             return null;
         }
+
+        List<PhoneResult> phones = user.getPhones() != null
+                ? user.getPhones().stream()
+                .map(this::toPhoneResult)
+                .toList()
+                : Collections.emptyList();
+
         return UserResult.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .phones(phones != null ? phones : Collections.emptyList())
+                .phones(phones)
                 .created(user.getCreated())
                 .modified(user.getModified())
                 .lastLogin(user.getLastLogin())
                 .token(user.getToken())
                 .active(user.isActive())
+                .build();
+    }
+
+    public PhoneResult toPhoneResult(Phone phone) {
+        if (phone == null) {
+            return null;
+        }
+        return PhoneResult.builder()
+                .id(phone.getId())
+                .number(phone.getNumber())
+                .cityCode(phone.getCityCode())
+                .countryCode(phone.getCountryCode())
                 .build();
     }
 }

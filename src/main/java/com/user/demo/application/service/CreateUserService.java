@@ -56,7 +56,7 @@ public class CreateUserService {
         User user = userCommandMapper.toDomain(command, encodedPassword, token);
         User savedUser = userRepository.save(user);
 
-        return userCommandMapper.toResult(savedUser, command.getPhones());
+        return userCommandMapper.toResult(savedUser);
     }
 
     private void validateEmail(String email) {

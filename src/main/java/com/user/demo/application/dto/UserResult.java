@@ -18,7 +18,7 @@ public class UserResult {
     private String id;
     private String name;
     private String email;
-    private List<PhoneCommand> phones;
+    private List<PhoneResult> phones;
     private LocalDateTime created;
     private LocalDateTime modified;
     private LocalDateTime lastLogin;
