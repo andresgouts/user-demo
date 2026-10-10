@@ -2,6 +2,7 @@ package com.user.demo.cucumber;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.user.demo.application.service.TokenService;
 import com.user.demo.infrastructure.controller.GlobalExceptionHandler;
 import com.user.demo.infrastructure.controller.UserController;
 import com.user.demo.infrastructure.controller.dto.PhoneRequestDto;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class UserRegistrationStepDefinitions {
@@ -35,11 +37,16 @@ public class UserRegistrationStepDefinitions {
     private GlobalExceptionHandler globalExceptionHandler;
 
     @Autowired
+    private TokenService tokenService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private MockMvc mockMvc;
     private UserRequestDto currentRequest;
     private MvcResult currentResult;
+    private String currentUserId;
+    private String currentUserToken;
 
     @Before
     public void setup() {
@@ -168,5 +175,84 @@ public class UserRegistrationStepDefinitions {
                 .password(password)
                 .phones(new ArrayList<>())
                 .build();
+    }
+
+    @Dado("que existe un usuario registrado en el sistema con correo {string}")
+    public void queExisteUnUsuarioRegistradoEnElSistemaConCorreo(String email) throws Exception {
+        UserRequestDto request = UserRequestDto.builder()
+                .name("Usuario Consulta")
+                .email(email)
+                .password("Clave123")
+                .phones(List.of(new PhoneRequestDto("1234567", "1", "57")))
+                .build();
+
+        MvcResult result = mockMvc.perform(post("/api/v1/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andReturn();
+
+        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+        this.currentUserId = root.get("id").asText();
+        this.currentUserToken = root.get("token").asText();
+    }
+
+    @Dado("que tengo un token JWT válido para {string}")
+    public void queTengoUnTokenJwtValidoPara(String email) {
+        this.currentUserToken = tokenService.generateToken(email);
+    }
+
+    @Cuando("solicito la información del usuario por su ID enviando el token JWT en la cabecera Authorization")
+    public void solicitoLaInformacionDelUsuarioPorSuIdConToken() throws Exception {
+        currentResult = mockMvc.perform(get("/api/v1/users/" + currentUserId)
+                .header("Authorization", "Bearer " + currentUserToken)
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+    }
+
+    @Cuando("solicito la información del usuario por su ID sin cabecera Authorization")
+    public void solicitoLaInformacionDelUsuarioPorSuIdSinToken() throws Exception {
+        currentResult = mockMvc.perform(get("/api/v1/users/" + currentUserId)
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+    }
+
+    @Cuando("solicito la información del usuario por su ID con un token inválido {string}")
+    public void solicitoLaInformacionDelUsuarioPorSuIdConTokenInvalido(String invalidToken) throws Exception {
+        currentResult = mockMvc.perform(get("/api/v1/users/" + currentUserId)
+                .header("Authorization", "Bearer " + invalidToken)
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+    }
+
+    @Cuando("solicito un usuario con un ID inexistente {string} usando el token")
+    public void solicitoUnUsuarioConIdInexistenteUsandoToken(String nonExistentId) throws Exception {
+        currentResult = mockMvc.perform(get("/api/v1/users/" + nonExistentId)
+                .header("Authorization", "Bearer " + currentUserToken)
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+    }
+
+    @Y("la respuesta debe contener el id del usuario consultado")
+    public void laRespuestaDebeContenerElIdDelUsuarioConsultado() throws Exception {
+        JsonNode root = objectMapper.readTree(currentResult.getResponse().getContentAsString());
+        assertTrue(root.has("id"));
+        assertEquals(currentUserId, root.get("id").asText());
+    }
+
+    @Y("la respuesta debe contener el nombre {string} y correo {string}")
+    public void laRespuestaDebeContenerElNombreYCorreo(String name, String email) throws Exception {
+        JsonNode root = objectMapper.readTree(currentResult.getResponse().getContentAsString());
+        assertTrue(root.has("name"));
+        assertTrue(root.has("email"));
+        assertEquals(name, root.get("name").asText());
+        assertEquals(email, root.get("email").asText());
+    }
+
+    @Y("la respuesta debe contener la lista de teléfonos del usuario")
+    public void laRespuestaDebeContenerLaListaDeTelefonosDelUsuario() throws Exception {
+        JsonNode root = objectMapper.readTree(currentResult.getResponse().getContentAsString());
+        assertTrue(root.has("phones"));
+        assertTrue(root.get("phones").isArray());
+        assertFalse(root.get("phones").isEmpty());
     }
 }

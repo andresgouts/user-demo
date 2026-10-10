@@ -1,7 +1,9 @@
 package com.user.demo.infrastructure.controller;
 
 import com.user.demo.domain.exception.EmailAlreadyRegisteredException;
+import com.user.demo.domain.exception.InvalidTokenException;
 import com.user.demo.domain.exception.InvalidUserDataException;
+import com.user.demo.domain.exception.UserNotFoundException;
 import com.user.demo.infrastructure.controller.dto.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,6 +30,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleInvalidUserData(InvalidUserDataException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidToken(InvalidTokenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }

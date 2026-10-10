@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,6 +21,9 @@ import java.time.LocalDateTime;
 public class UserResponseDto {
 
     private String id;
+    private String name;
+    private String email;
+    private List<PhoneResponseDto> phones;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime created;
