@@ -3,8 +3,6 @@ package com.user.demo.cucumber;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.user.demo.application.service.TokenService;
-import com.user.demo.infrastructure.controller.GlobalExceptionHandler;
-import com.user.demo.infrastructure.controller.UserController;
 import com.user.demo.infrastructure.controller.dto.PhoneRequestDto;
 import com.user.demo.infrastructure.controller.dto.UserRequestDto;
 import io.cucumber.java.Before;
@@ -14,9 +12,11 @@ import io.cucumber.java.es.Entonces;
 import io.cucumber.java.es.Y;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 public class UserRegistrationStepDefinitions {
 
     @Autowired
-    private UserController userController;
-
-    @Autowired
-    private GlobalExceptionHandler globalExceptionHandler;
+    private WebApplicationContext webApplicationContext;
 
     @Autowired
     private TokenService tokenService;
@@ -50,8 +47,8 @@ public class UserRegistrationStepDefinitions {
 
     @Before
     public void setup() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
-                .setControllerAdvice(globalExceptionHandler)
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
                 .build();
     }
 

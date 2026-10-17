@@ -4,8 +4,6 @@ import com.user.demo.application.dto.CreateUserCommand;
 import com.user.demo.application.dto.UserResult;
 import com.user.demo.application.service.CreateUserService;
 import com.user.demo.application.service.GetUserService;
-import com.user.demo.application.service.TokenService;
-import com.user.demo.domain.exception.InvalidTokenException;
 import com.user.demo.infrastructure.controller.dto.UserRequestDto;
 import com.user.demo.infrastructure.controller.dto.UserResponseDto;
 import com.user.demo.infrastructure.controller.mapper.UserDtoMapper;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,22 +33,20 @@ public class UserController {
 
     private final CreateUserService createUserService;
     private final GetUserService getUserService;
-    private final TokenService tokenService;
     private final UserDtoMapper userDtoMapper;
 
     public UserController(
             CreateUserService createUserService,
             GetUserService getUserService,
-            TokenService tokenService,
             UserDtoMapper userDtoMapper) {
         this.createUserService = createUserService;
         this.getUserService = getUserService;
-        this.tokenService = tokenService;
         this.userDtoMapper = userDtoMapper;
     }
 
     /**
      * Registra un nuevo usuario en el sistema.
+     * No requiere token de autenticación.
      *
      * @param request Datos del usuario a registrar (nombre, correo, contraseña y teléfonos).
      * @return {@link ResponseEntity} con los datos del usuario registrado y código HTTP 201 Created.
@@ -76,10 +71,10 @@ public class UserController {
 
     /**
      * Obtiene los datos de un usuario por su identificador único (ID).
-     * Requiere un token JWT válido enviado en la cabecera 'Authorization' (Bearer token).
+     * Requiere un token JWT válido enviado en la cabecera 'Authorization' (Bearer token),
+     * validado previamente por los filtros de Spring Security.
      *
      * @param id Identificador único del usuario (UUID).
-     * @param authorizationHeader Cabecera HTTP Authorization que contiene el token JWT.
      * @return {@link ResponseEntity} con los datos detallados del usuario y código HTTP 200 OK.
      */
     @Operation(
@@ -93,27 +88,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserResponseDto> getUserById(
-            @PathVariable String id,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        validateToken(authorizationHeader);
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
         UserResult result = getUserService.execute(id);
         UserResponseDto response = userDtoMapper.toDetailResponse(result);
 
         return ResponseEntity.ok(response);
-    }
-
-    private void validateToken(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            throw new InvalidTokenException("Token de autenticación no proporcionado");
-        }
-
-        String token = authorizationHeader.startsWith("Bearer ")
-                ? authorizationHeader.substring(7).trim()
-                : authorizationHeader.trim();
-
-        if (token.isEmpty() || !tokenService.validateToken(token)) {
-            throw new InvalidTokenException("Token JWT inválido o expirado");
-        }
     }
 }
