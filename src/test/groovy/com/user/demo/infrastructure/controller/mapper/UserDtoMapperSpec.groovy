@@ -2,8 +2,10 @@ package com.user.demo.infrastructure.controller.mapper
 
 import com.user.demo.application.dto.PhoneResult
 import com.user.demo.application.dto.UserResult
+import com.user.demo.infrastructure.controller.dto.LoginRequestDto
 import com.user.demo.infrastructure.controller.dto.PhoneRequestDto
 import com.user.demo.infrastructure.controller.dto.UserRequestDto
+import com.user.demo.infrastructure.controller.dto.UserResponseDto
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -35,6 +37,22 @@ class UserDtoMapperSpec extends Specification {
         command.phones[0].number == "1234567"
         command.phones[0].cityCode == "1"
         command.phones[0].countryCode == "57"
+    }
+
+    def "debe mapear LoginRequestDto a LoginCommand correctamente"() {
+        given: "un LoginRequestDto con credenciales"
+        def request = LoginRequestDto.builder()
+                .email("carlos@gomez.com")
+                .password("Clave123")
+                .build()
+
+        when: "se transforma a LoginCommand"
+        def command = mapper.toLoginCommand(request)
+
+        then: "los campos coinciden"
+        command != null
+        command.email == "carlos@gomez.com"
+        command.password == "Clave123"
     }
 
     def "debe mapear UserResult a UserResponseDto correctamente"() {
@@ -103,6 +121,7 @@ class UserDtoMapperSpec extends Specification {
     def "debe retornar null cuando los objetos de entrada son nulos"() {
         expect:
         mapper.toCommand(null) == null
+        mapper.toLoginCommand(null) == null
         mapper.toResponse(null) == null
         mapper.toDetailResponse(null) == null
         mapper.toPhoneCommand(null) == null

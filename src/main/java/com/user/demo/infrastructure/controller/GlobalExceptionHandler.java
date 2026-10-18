@@ -1,6 +1,7 @@
 package com.user.demo.infrastructure.controller;
 
 import com.user.demo.domain.exception.EmailAlreadyRegisteredException;
+import com.user.demo.domain.exception.InvalidCredentialsException;
 import com.user.demo.domain.exception.InvalidTokenException;
 import com.user.demo.domain.exception.InvalidUserDataException;
 import com.user.demo.domain.exception.UserNotFoundException;
@@ -30,6 +31,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleInvalidUserData(InvalidUserDataException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }

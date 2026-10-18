@@ -3,6 +3,7 @@ package com.user.demo.cucumber;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.user.demo.application.service.TokenService;
+import com.user.demo.infrastructure.controller.dto.LoginRequestDto;
 import com.user.demo.infrastructure.controller.dto.PhoneRequestDto;
 import com.user.demo.infrastructure.controller.dto.UserRequestDto;
 import io.cucumber.java.Before;
@@ -251,5 +252,51 @@ public class UserRegistrationStepDefinitions {
         assertTrue(root.has("phones"));
         assertTrue(root.get("phones").isArray());
         assertFalse(root.get("phones").isEmpty());
+    }
+
+    @Dado("que existe un usuario registrado en el sistema con correo {string} y contraseña {string}")
+    public void queExisteUnUsuarioRegistradoEnElSistemaConCorreoYClave(String email, String password) throws Exception {
+        UserRequestDto request = UserRequestDto.builder()
+                .name("Usuario Login")
+                .email(email)
+                .password(password)
+                .phones(List.of(new PhoneRequestDto("1234567", "1", "57")))
+                .build();
+
+        mockMvc.perform(post("/api/v1/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andReturn();
+    }
+
+    @Dado("que no existe ningún usuario registrado con el correo {string}")
+    public void queNoExisteNingunUsuarioRegistradoConElCorreo(String email) {
+        // Ningún usuario registrado con este correo
+    }
+
+    @Cuando("envío una solicitud POST a {string} con el correo {string} y contraseña {string}")
+    public void envioUnaSolicitudPostConCorreoYClave(String endpoint, String email, String password) throws Exception {
+        LoginRequestDto loginRequest = LoginRequestDto.builder()
+                .email(email)
+                .password(password)
+                .build();
+
+        currentResult = mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andReturn();
+    }
+
+    @Cuando("envío una solicitud POST a {string} con correo vacío y contraseña {string}")
+    public void envioUnaSolicitudPostConCorreoVacio(String endpoint, String password) throws Exception {
+        LoginRequestDto loginRequest = LoginRequestDto.builder()
+                .email("")
+                .password(password)
+                .build();
+
+        currentResult = mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andReturn();
     }
 }

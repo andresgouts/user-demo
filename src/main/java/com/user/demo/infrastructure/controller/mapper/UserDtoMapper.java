@@ -1,9 +1,11 @@
 package com.user.demo.infrastructure.controller.mapper;
 
 import com.user.demo.application.dto.CreateUserCommand;
+import com.user.demo.application.dto.LoginCommand;
 import com.user.demo.application.dto.PhoneCommand;
 import com.user.demo.application.dto.PhoneResult;
 import com.user.demo.application.dto.UserResult;
+import com.user.demo.infrastructure.controller.dto.LoginRequestDto;
 import com.user.demo.infrastructure.controller.dto.PhoneRequestDto;
 import com.user.demo.infrastructure.controller.dto.PhoneResponseDto;
 import com.user.demo.infrastructure.controller.dto.UserRequestDto;
@@ -32,6 +34,16 @@ public class UserDtoMapper {
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .phones(phoneCommands)
+                .build();
+    }
+
+    public LoginCommand toLoginCommand(LoginRequestDto request) {
+        if (request == null) {
+            return null;
+        }
+        return LoginCommand.builder()
+                .email(request.getEmail())
+                .password(request.getPassword())
                 .build();
     }
 
